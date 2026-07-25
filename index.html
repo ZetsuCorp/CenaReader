@@ -141,7 +141,7 @@ Ahh... That's just delightful, its great to see our little school family growing
       <span class="status" id="status"></span>
     </div>
     <div class="row">
-      <input id="anthropicKeyInput" type="password" placeholder="Groq API key" value="xxxzx" style="flex:1;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:13px;">
+      <input id="anthropicKeyInput" type="password" placeholder="Groq API key" value="XXXX" style="flex:1;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:13px;">
     </div>
   </div>
 
@@ -256,11 +256,11 @@ ${text}
     function parseSegments(raw){
       const blocks = raw.split('---SEGMENT---').map(b => b.trim()).filter(Boolean);
       return blocks.map(block => {
-        const speakerMatch = block.match(/SPEAKER:\s*(.*)/);
-        const typeMatch = block.match(/TYPE:\s*(.*)/);
-        const confMatch = block.match(/CONF:\s*(.*)/);
-        const emotionMatch = block.match(/EMOTION:\s*(.*)/);
-        const textMatch = block.match(/TEXT:\s*\n([\s\S]*?)<<<END>>>/);
+        const speakerMatch = block.match(/SPEAKER:\s*([\s\S]*?)\s*TYPE:/);
+        const typeMatch = block.match(/TYPE:\s*([\s\S]*?)\s*CONF:/);
+        const confMatch = block.match(/CONF:\s*([\s\S]*?)\s*EMOTION:/);
+        const emotionMatch = block.match(/EMOTION:\s*([\s\S]*?)\s*TEXT:/);
+        const textMatch = block.match(/TEXT:\s*([\s\S]*?)\s*<<<END>>>/);
         return {
           speaker: (speakerMatch?.[1] || "Narrator").trim(),
           type: (typeMatch?.[1] || "").trim().toLowerCase() === "dialogue" ? "dialogue" : "narration",
