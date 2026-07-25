@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cast — Cinematic Audio Experience</title>
+<style>
+  :root{
+    --bg: #0a0a10;
+    --panel: #131320;
+    --panel-2: #191928;
+    --text: #ece9f2;
+    --text-dim: #9997ab;
+    --line: #262438;
+    --spectrum: conic-gradient(from 180deg, #e8478c, #e8b93e, #46d6d6, #7a6ff0, #e8478c);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color:var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height:1.5;
+  }
+  .wrap{ max-width:920px; margin:0 auto; padding: 0 24px; }
+
+  /* NAV */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 0;
+  }
+  .logo{
+    font-family: Georgia, serif;
+    font-weight:700;
+    font-size:19px;
+    background: var(--spectrum);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .nav-cta{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:9px 18px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+
+  /* HERO */
+  .hero{
+    text-align:center;
+    padding: 70px 0 50px;
+  }
+  .hero h1{
+    font-family: Georgia, serif;
+    font-size:44px;
+    line-height:1.15;
+    font-weight:600;
+    max-width:680px;
+    margin: 0 auto 18px;
+  }
+  .hero h1 span{
+    background: var(--spectrum); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p{
+    color:var(--text-dim);
+    font-size:16px;
+    max-width:520px;
+    margin: 0 auto 30px;
+  }
+  .cta-row{ display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .primary-btn{
+    background: linear-gradient(135deg, #e8478c, #7a6ff0);
+    color:#fff; border:none; border-radius:26px;
+    padding:14px 32px; font-size:14.5px; font-weight:700; cursor:pointer;
+    box-shadow: 0 10px 28px rgba(232,71,140,0.28);
+  }
+  .free-note{ font-size:12.5px; color:var(--text-dim); }
+
+  /* LIVE DEMO */
+  .demo-panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px;
+    margin: 30px 0 70px;
+  }
+  .demo-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:1.5px;
+    color:var(--text-dim); margin-bottom:16px; font-weight:700;
+  }
+  .demo-line{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:9px 0; font-size:17px; font-weight:600;
+  }
+  .demo-line:not(.narration){
+    background:var(--panel-2);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:10px;
+  }
+  .demo-line.narration{ color:var(--text); margin-bottom:6px; }
+  .demo-tag{
+    font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px;
+    padding:3px 9px; border-radius:14px; white-space:nowrap; flex-shrink:0; margin-top:1px;
+  }
+  .demo-tag.confused{ box-shadow: 0 0 0 1.5px #e8b93e inset; }
+  .voice-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .voice-dot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .voice-name{ width:110px; font-size:14px; font-weight:600; outline:none; cursor:text; }
+  .voice-row select{
+    flex:1; background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:8px 10px; font-size:13px;
+  }
+  .demo-line.active-line{ box-shadow:0 0 0 1.5px #e8478c inset; }
+
+  /* SECTION HEADERS */
+  .section{ padding: 40px 0; border-top:1px solid var(--line); }
+  .section h2{
+    font-family: Georgia, serif;
+    font-size:26px; margin-bottom:8px;
+  }
+  .section .lede{ color:var(--text-dim); font-size:14.5px; max-width:520px; margin-bottom:32px; }
+
+  /* STEPS */
+  .steps{ display:grid; grid-template-columns: repeat(2,1fr); gap:20px; }
+  .step{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px;
+  }
+  .step-num{
+    width:26px; height:26px; border-radius:50%;
+    background: var(--spectrum);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; color:#0a0a10; margin-bottom:14px;
+  }
+  .step h3{ font-size:15px; margin-bottom:6px; }
+  .step p{ font-size:13px; color:var(--text-dim); }
+
+  /* FEATURES */
+  .features{ display:grid; grid-template-columns: repeat(2,1fr); gap:16px; }
+  .feature{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;
+  }
+  .feature h3{ font-size:14.5px; margin-bottom:6px; }
+  .feature p{ font-size:13px; color:var(--text-dim); }
+
+  /* USE CASES */
+  .use-tags{ display:flex; flex-wrap:wrap; gap:10px; }
+  .use-tag{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:20px;
+    padding:9px 16px; font-size:13px; color:var(--text-dim);
+  }
+
+  /* HONEST SCOPE */
+  .scope-note{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:20px 22px; font-size:13.5px; color:var(--text-dim); line-height:1.7;
+  }
+  .scope-note strong{ color:var(--text); }
+
+  /* FOOTER CTA */
+  .footer-cta{
+    text-align:center; padding: 60px 0 80px;
+  }
+  .footer-cta h2{ font-family:Georgia,serif; font-size:28px; margin-bottom:14px; }
+  .footer-cta p{ color:var(--text-dim); font-size:14px; margin-bottom:26px; }
+
+  @media (max-width:640px){
+    .steps, .features{ grid-template-columns:1fr; }
+    .hero h1{ font-size:32px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <div class="logo">Cast</div>
+    <button class="nav-cta">Try it free</button>
+  </nav>
+
+  <section class="hero">
+    <h1 style="display:flex;flex-direction:column;gap:6px;">
+      <span style="font-size:20px;color:var(--text);font-weight:400;background:none;-webkit-text-fill-color:var(--text);">The</span>
+      <span>Cinematic Audio Experience</span>
+      <span style="font-size:22px;color:var(--text);font-weight:400;background:none;-webkit-text-fill-color:var(--text);">— turn any book into full-cast audio</span>
+    </h1>
+    <ol style="list-style:none; display:flex; flex-direction:column; gap:6px; max-width:480px; margin:0 auto 30px; text-align:left; color:var(--text-dim); font-size:15px;">
+      <li><strong style="color:var(--text);">1.</strong> Paste a passage</li>
+      <li><strong style="color:var(--text);">2.</strong> It reads the prose for speaker and tone</li>
+      <li><strong style="color:var(--text);">3.</strong> You cast a voice for each character</li>
+      <li><strong style="color:var(--text);">4.</strong> Press play to hear the scene performed</li>
+    </ol>
+    <div class="cta-row">
+      <button class="primary-btn">Try it free</button>
+      <span class="free-note">Enter your own API key to start — it's free because it runs on your account, not ours</span>
+    </div>
+  </section>
+
+  <div style="height:1px; background:var(--line); margin:20px 0 46px;"></div>
+
+  <div class="live-demo-wrap">
+    <div style="text-align:center; margin-bottom:20px;">
+      <span style="display:inline-block; background:rgba(122,111,240,0.12); color:#a89bf5; border:1px solid rgba(122,111,240,0.3); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;">● Live Demo — try it right here</span>
+    </div>
+
+    <div class="demo-panel">
+      <div class="demo-label">Voice Assignment</div>
+      <div class="voice-row">
+        <span class="voice-dot" style="background:#8d8aa0;"></span>
+        <span class="voice-name">Narrator</span>
+        <select id="voiceSelectNarrator"></select>
+      </div>
+      <div class="voice-row">
+        <span class="voice-dot" style="background:#e8478c;"></span>
+        <span class="voice-name" contenteditable="true" id="speaker1" title="Click to rename">Mrs. Green</span>
+        <select id="voiceSelect1"></select>
+      </div>
+      <div class="voice-row">
+        <span class="voice-dot" style="background:#46d6d6;"></span>
+        <span class="voice-name" contenteditable="true" id="speaker2" title="Click to rename">Raven</span>
+        <select id="voiceSelect2"></select>
+      </div>
+      <div style="border-left:3px solid #e8b93e; background:rgba(232,185,62,0.08); padding:12px 14px; border-radius:0 8px 8px 0; font-size:13.5px; color:var(--text); margin:16px 0;">
+        Playing with your browser's built-in voices. Add your own ElevenLabs key on the app for a wider range of higher-quality voices.
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="primary-btn" style="padding:11px 26px;font-size:13.5px;" id="demoPlayBtn">▶ Play scene</button>
+        <button style="padding:11px 26px;font-size:13.5px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:26px;cursor:pointer;" id="demoStopBtn" disabled>■ Stop</button>
+        <span class="free-note" id="demoStatus"></span>
+      </div>
+    </div>
+
+    <div class="demo-panel" style="margin-top:16px;">
+      <div class="demo-label">Transcript · click a tag to reassign a flagged line</div>
+      <div class="demo-line narration" id="line0">
+        <span class="demo-tag" style="background:#8d8aa022;color:#8d8aa0;">Narrator</span>
+        <span>The teacher swiped through her tablet, then noticed the notification blinking in the corner of her screen.</span>
+      </div>
+      <div class="demo-line" id="line1">
+        <span class="demo-tag" style="background:#e8478c22;color:#e8478c;">Mrs. Green</span>
+        <span>"Oh? That's odd, I wasn't expecting anyone new to check in this early."</span>
+      </div>
+      <div class="demo-line narration" id="line2">
+        <span class="demo-tag" style="background:#8d8aa022;color:#8d8aa0;">Narrator</span>
+        <span>Glancing up at the boy with the iridescent mohawk standing awkwardly by the door.</span>
+      </div>
+      <div class="demo-line" id="line3">
+        <span class="demo-tag confused" style="background:#46d6d622;color:#46d6d6;">Raven · unsure</span>
+        <span>"Huh? Wait, am I even supposed to be in this room right now?"</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const demoSegments = [
+      { lineId: 'line0', speakerSelect: 'voiceSelectNarrator', text: "The teacher swiped through her tablet, then noticed the notification blinking in the corner of her screen.", pitch: 1.0, rate: 1.0 },
+      { lineId: 'line1', speakerSelect: 'voiceSelect1', text: "Oh? That's odd, I wasn't expecting anyone new to check in this early.", pitch: 1.0, rate: 1.0 },
+      { lineId: 'line2', speakerSelect: 'voiceSelectNarrator', text: "Glancing up at the boy with the iridescent mohawk standing awkwardly by the door.", pitch: 1.0, rate: 1.0 },
+      { lineId: 'line3', speakerSelect: 'voiceSelect2', text: "Huh? Wait, am I even supposed to be in this room right now?", pitch: 1.15, rate: 0.97 }
+    ];
+    let demoVoices = [];
+    function loadDemoVoices(){
+      demoVoices = speechSynthesis.getVoices();
+      if(!demoVoices.length) return;
+      [document.getElementById('voiceSelectNarrator'), document.getElementById('voiceSelect1'), document.getElementById('voiceSelect2')].forEach((sel, idx) => {
+        if(sel.options.length) return; // already populated
+        demoVoices.forEach((v, i) => {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = v.name;
+          sel.appendChild(opt);
+        });
+        sel.value = idx % demoVoices.length;
+      });
+    }
+    speechSynthesis.onvoiceschanged = loadDemoVoices;
+    loadDemoVoices();
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    const demoStopBtn = document.getElementById('demoStopBtn');
+
+    demoPlayBtn.addEventListener('click', () => {
+      if(!demoVoices.length){
+        document.getElementById('demoStatus').textContent = 'No browser voices found — try again in a second.';
+        return;
+      }
+      speechSynthesis.cancel();
+      demoPlayBtn.disabled = true;
+      demoStopBtn.disabled = false;
+      let i = 0;
+      function speakNext(){
+        document.querySelectorAll('.demo-line').forEach(l => l.classList.remove('active-line'));
+        if(i >= demoSegments.length){ demoPlayBtn.disabled = false; demoStopBtn.disabled = true; return; }
+        const seg = demoSegments[i];
+        document.getElementById(seg.lineId).classList.add('active-line');
+        const utter = new SpeechSynthesisUtterance(seg.text);
+        utter.pitch = seg.pitch;
+        utter.rate = seg.rate;
+        const sel = document.getElementById(seg.speakerSelect);
+        utter.voice = demoVoices[parseInt(sel.value)];
+        utter.onend = () => { i++; speakNext(); };
+        speechSynthesis.speak(utter);
+      }
+      speakNext();
+    });
+
+    demoStopBtn.addEventListener('click', () => {
+      speechSynthesis.cancel();
+      document.querySelectorAll('.demo-line').forEach(l => l.classList.remove('active-line'));
+      demoPlayBtn.disabled = false;
+      demoStopBtn.disabled = true;
+    });
+  </script>
+
+  <section class="section">
+    <h2>How it works</h2>
+    <div class="lede">Four steps, no timeline to edit, no manual character setup.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Add your keys</h3>
+        <p>A free Groq key powers the speaker casting, a free ElevenLabs key powers real voices — both entered once, stored only on your device.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Paste your text</h3>
+        <p>Any scene, chapter, or script — even prose with no dialogue tags at all.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>We cast it</h3>
+        <p>Every line gets a speaker, a confidence flag on anything ambiguous, and a read on its emotional tone.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Press play</h3>
+        <p>Each character speaks in their own assigned voice, delivered in character — confused, excited, sarcastic, whatever the scene calls for.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>What makes this different</h2>
+    <div class="lede">Most narration tools read everything in one flat voice, or make you manually tag every line yourself.</div>
+    <div class="features">
+      <div class="feature">
+        <h3>Recast on the fly</h3>
+        <p>Rename or reassign any character right in the transcript, no re-running the analysis.</p>
+      </div>
+      <div class="feature">
+        <h3>You own the engine</h3>
+        <p>Bring your own Groq and ElevenLabs keys — nothing routed through a paid subscription, swap providers anytime.</p>
+      </div>
+      <div class="feature">
+        <h3>You can fix its mistakes</h3>
+        <p>Rename a misattributed speaker with one click, right in the transcript, before you ever hit play. Nothing's locked in.</p>
+      </div>
+      <div class="feature">
+        <h3>Built on real messy prose</h3>
+        <p>Tested against writing that never says "she said," where narration just runs straight into a quote. Most narration tools assume clean dialogue tags; this one doesn't need them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Built for cinematic audiobooks — and what comes after</h2>
+    <div class="lede">Casting voices per character is the slow part of turning a story into anything animated. Automate that first, and a full cinematic audiobook becomes the fast on-ramp to an animated feature later — not a separate project starting from zero.</div>
+    <div class="use-tags">
+      <span class="use-tag">Fiction & novels</span>
+      <span class="use-tag">Screenplays & scripts</span>
+      <span class="use-tag">Dramatic readings</span>
+      <span class="use-tag">Webcomics & serialized stories</span>
+      <span class="use-tag">Dialogue-heavy worldbuilding</span>
+      <span class="use-tag">Table read prep</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Where things stand today</h2>
+    <div class="scope-note">
+      This is an early version, and we'd rather tell you straight than oversell it: playback currently uses your <strong>browser's built-in voices for free</strong>, or your own <strong>ElevenLabs</strong> account for higher-quality ones — there's no built-in voice library or one-click export to MP3 yet. Casting and emotion-tagging are fully automatic and free to use on any passage. Full audiobook export is on the roadmap, not here yet.
+    </div>
+  </section>
+
+  <section class="footer-cta">
+    <h2>Paste a scene. Hear it happen.</h2>
+    <p>Free to try, no account required for your first passage.</p>
+    <button class="primary-btn">Try it free</button>
+  </section>
+
+</div>
+</body>
+</html>
