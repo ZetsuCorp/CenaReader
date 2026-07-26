@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CenaReader — Creator Network</title>
+<style>
+  :root{
+    --bg:#0a0a10; --panel:#131320; --panel-2:#191928; --text:#ece9f2; --text-dim:#9997ab; --line:#262438;
+    --spectrum: conic-gradient(from 180deg, #e8478c, #e8b93e, #46d6d6, #7a6ff0, #e8478c);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; line-height:1.5; }
+  .wrap{ max-width:640px; margin:0 auto; }
+
+  /* HEADER */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:var(--bg); z-index:10;
+  }
+  .logo{
+    font-family:Georgia,serif; font-weight:700; font-size:18px;
+    background:var(--spectrum); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  nav.header-nav{ display:flex; gap:18px; font-size:13px; color:var(--text-dim); font-weight:600; }
+  nav.header-nav span.active{ color:var(--text); }
+  .upload-btn{
+    background:linear-gradient(135deg,#e8478c,#7a6ff0); color:#fff; border:none;
+    border-radius:20px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+
+  /* UPLOAD MODAL OVERLAY */
+  .upload-form{
+    position:fixed; inset:0; z-index:100;
+    background:rgba(5,5,10,0.72);
+    backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .upload-form-inner{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:24px 24px 22px; max-width:420px; width:100%;
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+    max-height:88vh; overflow-y:auto;
+  }
+  .form-label{
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:1px;
+    color:var(--text-dim); font-weight:700; margin:14px 0 6px;
+  }
+  .upload-form-inner input[type="text"]{
+    width:100%; background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:9px 10px; font-size:13.5px;
+  }
+  .upload-form-inner input[type="file"]{
+    width:100%; font-size:12.5px; color:var(--text-dim);
+  }
+  .cancel-btn{
+    background:transparent; color:var(--text-dim); border:1px solid var(--line);
+    border-radius:20px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer;
+  }
+  .form-status{ font-size:12.5px; color:var(--text-dim); margin-top:10px; }
+  .ad-card{
+    border-style:dashed;
+    padding:24px 16px;
+    text-align:center;
+  }
+  .ad-card-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:1.5px;
+    color:var(--text-dim); font-weight:700; margin-bottom:8px;
+  }
+  .ad-card-body{ color:var(--text-dim); font-size:13px; }
+
+  /* FEED SECTION */
+  .feed-section{ padding:8px 20px 40px; }
+  .feed-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim);
+    font-weight:700; margin:14px 4px 14px;
+  }
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; margin-bottom:22px;
+  }
+  .card-cover{
+    width:100%; aspect-ratio:1/1; display:block; object-fit:cover;
+  }
+  .card-body{ padding:16px; }
+  .card-title{ font-family:Georgia,serif; font-size:17px; margin-bottom:2px; }
+  .card-creator{ font-size:12.5px; color:var(--text-dim); margin-bottom:12px; }
+  .play-row{
+    display:flex; align-items:center; gap:10px; background:var(--panel-2);
+    border-radius:20px; padding:8px 8px 8px 10px; margin-bottom:12px;
+  }
+  .play-btn{
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#e8478c,#7a6ff0); color:#fff; font-size:13px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .progress-track{ flex:1; height:4px; background:var(--line); border-radius:2px; position:relative; }
+  .progress-fill{ position:absolute; left:0; top:0; height:100%; border-radius:2px; background:var(--spectrum); }
+  .duration{ font-size:11px; color:var(--text-dim); flex-shrink:0; }
+  .stats-row{ display:flex; gap:18px; font-size:12.5px; color:var(--text-dim); }
+  .stats-row span{ display:flex; align-items:center; gap:5px; }
+
+  /* FOOTER */
+  footer{
+    border-top:1px solid var(--line); padding:28px 20px; text-align:center;
+    color:var(--text-dim); font-size:12px;
+  }
+  footer .footer-links{ display:flex; justify-content:center; gap:16px; margin-bottom:10px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">CenaReader</div>
+    <nav class="header-nav">
+      <span class="active">Feed</span>
+      <span>My Books</span>
+    </nav>
+    <button class="upload-btn" id="uploadOpenBtn">+ Upload</button>
+  </header>
+
+  <div class="upload-form" id="uploadForm" style="display:none;">
+    <div class="upload-form-inner">
+      <div class="feed-label" style="margin-top:0;">New Upload</div>
+      <label class="form-label">Cover image</label>
+      <input type="file" id="coverInput" accept="image/*">
+      <label class="form-label">Audio file</label>
+      <input type="file" id="audioInput" accept="audio/*">
+      <label class="form-label">Title</label>
+      <input type="text" id="titleInput" placeholder="Chro Ma Key: Colors Beyond Reality">
+      <label class="form-label">Creator name</label>
+      <input type="text" id="creatorInput" placeholder="Artworqq">
+      <label class="form-label">Chapter / episode label (optional)</label>
+      <input type="text" id="chapterInput" placeholder="Act 1">
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="upload-btn" id="uploadSubmitBtn">Post to feed</button>
+        <button class="cancel-btn" id="uploadCancelBtn">Cancel</button>
+      </div>
+      <div class="form-status" id="uploadFormStatus"></div>
+    </div>
+  </div>
+
+  <div class="feed-section">
+    <div class="feed-label">Recently Created</div>
+
+    <div class="card">
+      <img class="card-cover" src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=500&fit=crop" alt="cover">
+      <div class="card-body">
+        <div class="card-title">Chro Ma Key: Colors Beyond Reality</div>
+        <div class="card-creator">by Artworqq · Act 1</div>
+        <div class="play-row">
+          <button class="play-btn">▶</button>
+          <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
+          <div class="duration">4:12</div>
+        </div>
+        <div class="stats-row">
+          <span>♥ 0</span>
+          <span>▶ 0 plays</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    CenaReader Creator Network · Zetsu EOe
+  </footer>
+
+</div>
+
+<script>
+  const uploadOpenBtn = document.getElementById('uploadOpenBtn');
+  const uploadForm = document.getElementById('uploadForm');
+  const uploadCancelBtn = document.getElementById('uploadCancelBtn');
+  const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+  const uploadFormStatus = document.getElementById('uploadFormStatus');
+  const feedSection = document.querySelector('.feed-section');
+
+  uploadOpenBtn.addEventListener('click', () => {
+    uploadForm.style.display = uploadForm.style.display === 'none' ? 'flex' : 'none';
+  });
+  uploadCancelBtn.addEventListener('click', () => {
+    uploadForm.style.display = 'none';
+  });
+  uploadForm.addEventListener('click', (e) => {
+    if(e.target === uploadForm) uploadForm.style.display = 'none';
+  });
+
+  uploadSubmitBtn.addEventListener('click', () => {
+    const coverFile = document.getElementById('coverInput').files[0];
+    const audioFile = document.getElementById('audioInput').files[0];
+    const title = document.getElementById('titleInput').value.trim();
+    const creator = document.getElementById('creatorInput').value.trim();
+    const chapter = document.getElementById('chapterInput').value.trim();
+
+    if(!coverFile){ uploadFormStatus.textContent = 'A cover image is required.'; return; }
+    if(!audioFile){ uploadFormStatus.textContent = 'An audio file is required.'; return; }
+    if(!title){ uploadFormStatus.textContent = 'A title is required.'; return; }
+    if(!creator){ uploadFormStatus.textContent = 'A creator name is required.'; return; }
+
+    uploadFormStatus.textContent = 'Reading audio duration...';
+
+    const coverUrl = URL.createObjectURL(coverFile);
+    const audioUrl = URL.createObjectURL(audioFile);
+    const probe = new Audio(audioUrl);
+
+    probe.addEventListener('loadedmetadata', () => {
+      const totalSeconds = Math.round(probe.duration);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = String(totalSeconds % 60).padStart(2, '0');
+      const durationLabel = `${mins}:${secs}`;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img class="card-cover" src="${coverUrl}" alt="cover">
+        <div class="card-body">
+          <div class="card-title">${title}</div>
+          <div class="card-creator">by ${creator}${chapter ? ' · ' + chapter : ''}</div>
+          <div class="play-row">
+            <button class="play-btn" onclick="this.closest('.play-row').querySelector('audio').play()">▶</button>
+            <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
+            <div class="duration">${durationLabel}</div>
+            <audio src="${audioUrl}" style="display:none;"></audio>
+          </div>
+          <div class="stats-row">
+            <span>♥ 0</span>
+            <span>▶ 0 plays</span>
+          </div>
+        </div>
+      `;
+      feedSection.insertBefore(card, feedSection.children[1]);
+
+      uploadFormStatus.textContent = 'Posted.';
+      document.getElementById('coverInput').value = '';
+      document.getElementById('audioInput').value = '';
+      document.getElementById('titleInput').value = '';
+      document.getElementById('creatorInput').value = '';
+      document.getElementById('chapterInput').value = '';
+      setTimeout(() => { uploadForm.style.display = 'none'; uploadFormStatus.textContent = ''; }, 800);
+    });
+
+    probe.addEventListener('error', () => {
+      uploadFormStatus.textContent = 'Could not read that audio file — try a different format (MP3 works best).';
+    });
+  });
+</script>
+</body>
+</html>
