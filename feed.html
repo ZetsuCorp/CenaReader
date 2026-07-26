@@ -22,8 +22,12 @@
     font-family:Georgia,serif; font-weight:700; font-size:18px;
     background:var(--spectrum); -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  nav.header-nav{ display:flex; gap:18px; font-size:13px; color:var(--text-dim); font-weight:600; }
-  nav.header-nav span.active{ color:var(--text); }
+  .author-search{
+    flex:1; max-width:280px; margin:0 16px;
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:20px; padding:8px 14px; font-size:13px;
+  }
+  .author-search::placeholder{ color:var(--text-dim); }
   .upload-btn{
     background:linear-gradient(135deg,#e8478c,#7a6ff0); color:#fff; border:none;
     border-radius:20px; padding:8px 18px; font-size:13px; font-weight:700; cursor:pointer;
@@ -115,10 +119,7 @@
 
   <header>
     <a class="logo" href="https://zetsucorp.github.io/CenaReader/" style="text-decoration:none;">CenaReader</a>
-    <nav class="header-nav">
-      <span class="active">Feed</span>
-      <span>My Books</span>
-    </nav>
+    <input type="text" class="author-search" id="authorSearch" placeholder="Find an author..." data-action="filter-by-creator_name">
     <button class="upload-btn" id="uploadOpenBtn">+ Upload</button>
   </header>
 
@@ -146,21 +147,36 @@
   <div class="feed-section">
     <div class="feed-label">Recently Created</div>
 
-    <div class="card">
-      <img class="card-cover" src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=500&fit=crop" alt="cover">
+    <!-- ============================================================
+         POST CARD TEMPLATE — one of these per row from the posts table.
+         Backend supplies: cover_url, title, creator_name, chapter_label,
+         audio_url, duration_seconds, like_count, play_count.
+         Everything below is placeholder data standing in for those fields.
+    ============================================================= -->
+    <div class="card" data-template="post-card">
+      <img class="card-cover" src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=500&fit=crop" alt="cover" data-field="cover_url">
       <div class="card-body">
-        <div class="card-title">Chro Ma Key: Colors Beyond Reality</div>
-        <div class="card-creator">by Artworqq · Act 1</div>
+        <div class="card-title" data-field="title">Chro Ma Key: Colors Beyond Reality</div>
+        <div class="card-creator"><span data-field="creator_name">Artworqq</span> · <span data-field="chapter_label">Act 1</span></div>
         <div class="play-row">
-          <button class="play-btn">▶</button>
+          <button class="play-btn" data-action="play-audio">▶</button>
           <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
-          <div class="duration">4:12</div>
+          <div class="duration" data-field="duration_seconds">4:12</div>
         </div>
         <div class="stats-row">
-          <span>♥ 0</span>
-          <span>▶ 0 plays</span>
+          <span>♥ <span data-field="like_count">0</span></span>
+          <span>▶ <span data-field="play_count">0</span> plays</span>
         </div>
       </div>
+    </div>
+
+    <!-- ============================================================
+         AD CARD TEMPLATE — inserted every N posts (backend or client-side
+         interleave logic decides N). Ad network supplies creative + link.
+    ============================================================= -->
+    <div class="card ad-card" data-template="ad-card">
+      <div class="ad-card-label">Sponsored</div>
+      <div class="ad-card-body" data-field="ad_creative">Ad space</div>
     </div>
   </div>
 
@@ -171,6 +187,16 @@
 </div>
 
 <script>
+  /* ============================================================
+     TEMPLATE NOTE: everything below simulates the upload flow using
+     local blob URLs and direct DOM insertion — nothing is persisted
+     or shared between users. In the real build, uploadSubmitBtn's
+     handler gets replaced with: upload cover+audio to object storage,
+     insert a row into the posts table, then either re-fetch the feed
+     or append the new row's real returned URLs. The card markup itself
+     (data-template="post-card") does not change — only where its
+     data comes from does.
+  ============================================================= */
   const uploadOpenBtn = document.getElementById('uploadOpenBtn');
   const uploadForm = document.getElementById('uploadForm');
   const uploadCancelBtn = document.getElementById('uploadCancelBtn');
