@@ -112,13 +112,28 @@
   .text{ flex:1; line-height:1.5; }
   .note{ font-size:12px; color:var(--text-dim); margin-top:18px; line-height:1.6; }
   .empty{ color:var(--text-dim); font-size:13px; font-style:italic; }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:var(--bg); z-index:10;
+    margin:-40px -20px 24px;
+  }
+  header .logo{
+    font-family:Georgia,serif; font-weight:700; font-size:18px; text-decoration:none;
+    background:var(--spectrum); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .publish-btn{
+    background:linear-gradient(135deg,#e8478c,#7a6ff0); color:#fff; border:none;
+    border-radius:20px; padding:9px 18px; font-size:13px; font-weight:700; cursor:pointer; text-decoration:none;
+  }
 </style>
 </head>
 <body>
+<header>
+  <a class="logo" href="https://cenareader.ploy.build/">CenaReader</a>
+  <a class="publish-btn" href="https://zetsucorp.github.io/CenaReader/feed.html">Publish to Feed</a>
+</header>
 <div class="wrap">
-  <a href="https://cenareader.ploy.build/" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--text-dim); font-size:13px; font-weight:600; background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:8px 16px; margin-bottom:20px; transition:border-color 0.15s, color 0.15s;" onmouseover="this.style.borderColor='#7a6ff0';this.style.color='var(--text)';" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--text-dim)';">
-    <span style="font-size:15px;">←</span> Back to Home
-  </a>
   <h1>Chro Ma Key — Narrator</h1>
   <div class="sub">Paste a passage. It gets read speaker-by-speaker, in character.</div>
 
