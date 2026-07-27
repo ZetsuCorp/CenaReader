@@ -167,14 +167,14 @@
   const feedList = document.getElementById('feedList');
   const authorSearch = document.getElementById('authorSearch');
 
-  let supabase = null;
+  let sb = null;
   let allPosts = [];
 
   try{
     if(!window.supabase) throw new Error('Supabase library did not load from the CDN.');
     const SUPABASE_URL = "https://jtrdxlqtxjffzqtansqj.supabase.co";
     const SUPABASE_KEY = "sb_publishable_Q2tAo9bOgcvVW6KUBDQBAA_WTMpLloP";
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }catch(err){
     console.error('Supabase init failed:', err);
     feedList.innerHTML = '<div class="empty-state">Could not connect to the database — check your connection and refresh.</div>';
@@ -226,7 +226,7 @@
       if(!counted && audioEl.currentTime > 3){
         counted = true;
         playCountEl.textContent = parseInt(playCountEl.textContent) + 1;
-        supabase.rpc('increment_play_count', { post_id: post.id }).then(({ error }) => {
+        sb.rpc('increment_play_count', { post_id: post.id }).then(({ error }) => {
           if(error) console.error('play count increment failed', error);
         });
       }
@@ -258,9 +258,9 @@
   }
 
   async function loadFeed(){
-    if(!supabase) return;
+    if(!sb) return;
     try{
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('audio_book_posts')
         .select('*')
         .order('created_at', { ascending: false });
@@ -285,7 +285,7 @@
   });
 
   uploadSubmitBtn.addEventListener('click', async () => {
-    if(!supabase){ uploadFormStatus.textContent = 'Not connected to the database — refresh and try again.'; return; }
+    if(!sb){ uploadFormStatus.textContent = 'Not connected to the database — refresh and try again.'; return; }
     const coverFile = document.getElementById('coverInput').files[0];
     const audioFile = document.getElementById('audioInput').files[0];
     const title = document.getElementById('titleInput').value.trim();
@@ -308,19 +308,19 @@
         uploadFormStatus.textContent = 'Uploading cover...';
         const coverExt = coverFile.name.split('.').pop();
         const coverPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${coverExt}`;
-        const { error: coverErr } = await supabase.storage.from('covers').upload(coverPath, coverFile);
+        const { error: coverErr } = await sb.storage.from('covers').upload(coverPath, coverFile);
         if(coverErr) throw coverErr;
-        const coverUrl = supabase.storage.from('covers').getPublicUrl(coverPath).data.publicUrl;
+        const coverUrl = sb.storage.from('covers').getPublicUrl(coverPath).data.publicUrl;
 
         uploadFormStatus.textContent = 'Uploading audio...';
         const audioExt = audioFile.name.split('.').pop();
         const audioPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${audioExt}`;
-        const { error: audioErr } = await supabase.storage.from('audio').upload(audioPath, audioFile);
+        const { error: audioErr } = await sb.storage.from('audio').upload(audioPath, audioFile);
         if(audioErr) throw audioErr;
-        const audioUrl = supabase.storage.from('audio').getPublicUrl(audioPath).data.publicUrl;
+        const audioUrl = sb.storage.from('audio').getPublicUrl(audioPath).data.publicUrl;
 
         uploadFormStatus.textContent = 'Posting...';
-        const { error: insertErr } = await supabase.from('audio_book_posts').insert({
+        const { error: insertErr } = await sb.from('audio_book_posts').insert({
           creator_name: creator,
           title: title,
           chapter_label: chapter || null,
@@ -352,7 +352,7 @@
     });
   });
 
-  if(supabase) loadFeed();
+  if(sb) loadFeed();
 </script>
 </body>
 </html>
