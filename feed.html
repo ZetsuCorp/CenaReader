@@ -259,7 +259,7 @@
       .order('created_at', { ascending: false });
 
     if(error){
-      feedList.innerHTML = '<div class="empty-state">Could not load the feed — try refreshing.</div>';
+      feedList.innerHTML = '<div class="empty-state">Could not load the feed.<br><br>Error: ' + (error.message || JSON.stringify(error)) + '</div>';
       console.error(error);
       return;
     }
