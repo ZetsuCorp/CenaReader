@@ -155,10 +155,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://jtrdxlqtxjffzqtansqj.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_Q2tAo9bOgcvVW6KUBDQBAA_WTMpLloP";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  // Wire the modal FIRST — this must work even if Supabase fails to load.
   const uploadOpenBtn = document.getElementById('uploadOpenBtn');
   const uploadForm = document.getElementById('uploadForm');
   const uploadCancelBtn = document.getElementById('uploadCancelBtn');
@@ -166,8 +163,6 @@
   const uploadFormStatus = document.getElementById('uploadFormStatus');
   const feedList = document.getElementById('feedList');
   const authorSearch = document.getElementById('authorSearch');
-
-  let allPosts = [];
 
   uploadOpenBtn.addEventListener('click', () => {
     uploadForm.style.display = uploadForm.style.display === 'none' ? 'flex' : 'none';
@@ -178,6 +173,19 @@
   uploadForm.addEventListener('click', (e) => {
     if(e.target === uploadForm) uploadForm.style.display = 'none';
   });
+
+  let supabase = null;
+  let allPosts = [];
+
+  try{
+    if(!window.supabase) throw new Error('Supabase library did not load from the CDN.');
+    const SUPABASE_URL = "https://jtrdxlqtxjffzqtansqj.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_Q2tAo9bOgcvVW6KUBDQBAA_WTMpLloP";
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }catch(err){
+    console.error('Supabase init failed:', err);
+    feedList.innerHTML = '<div class="empty-state">Could not connect to the database — check your connection and refresh.</div>';
+  }
 
   function formatDuration(totalSeconds){
     const mins = Math.floor(totalSeconds / 60);
@@ -257,6 +265,7 @@
   }
 
   async function loadFeed(){
+    if(!supabase) return;
     const { data, error } = await supabase
       .from('audio_book_posts')
       .select('*')
@@ -278,6 +287,7 @@
   });
 
   uploadSubmitBtn.addEventListener('click', async () => {
+    if(!supabase){ uploadFormStatus.textContent = 'Not connected to the database — refresh and try again.'; return; }
     const coverFile = document.getElementById('coverInput').files[0];
     const audioFile = document.getElementById('audioInput').files[0];
     const title = document.getElementById('titleInput').value.trim();
@@ -344,7 +354,7 @@
     });
   });
 
-  loadFeed();
+  if(supabase) loadFeed();
 </script>
 </body>
 </html>
