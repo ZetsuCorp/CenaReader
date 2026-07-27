@@ -12,7 +12,6 @@
   body{ background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; line-height:1.5; }
   .wrap{ max-width:640px; margin:0 auto; }
 
-  /* HEADER */
   header{
     display:flex; align-items:center; justify-content:space-between;
     padding:16px 20px; border-bottom:1px solid var(--line);
@@ -33,7 +32,6 @@
     border-radius:20px; padding:8px 18px; font-size:15px; font-weight:700; cursor:pointer;
   }
 
-  /* UPLOAD MODAL OVERLAY */
   .upload-form{
     position:fixed; inset:0; z-index:100;
     background:rgba(5,5,10,0.72);
@@ -74,7 +72,6 @@
   }
   .ad-card-body{ color:var(--text-dim); font-size:15px; }
 
-  /* FEED SECTION */
   .feed-section{ padding:8px 20px 40px; }
   .feed-label{
     font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim);
@@ -106,20 +103,19 @@
   .stats-row{ display:flex; gap:18px; font-size:14.5px; color:var(--text-dim); }
   .stats-row span{ display:flex; align-items:center; gap:5px; }
 
-  /* FOOTER */
   footer{
     border-top:1px solid var(--line); padding:28px 20px; text-align:center;
     color:var(--text-dim); font-size:14px;
   }
-  footer .footer-links{ display:flex; justify-content:center; gap:16px; margin-bottom:10px; font-weight:600; }
+  .empty-state{ text-align:center; color:var(--text-dim); font-size:14px; padding:40px 20px; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <a class="logo" href="https://zetsucorp.github.io/CenaReader/" style="text-decoration:none;">CenaReader</a>
-    <input type="text" class="author-search" id="authorSearch" placeholder="Find an author..." data-action="filter-by-creator_name">
+    <a class="logo" href="https://cenareader.ploy.build/" style="text-decoration:none;">CenaReader</a>
+    <input type="text" class="author-search" id="authorSearch" placeholder="Find an author...">
     <button class="upload-btn" id="uploadOpenBtn">+ Upload</button>
   </header>
 
@@ -146,37 +142,8 @@
 
   <div class="feed-section">
     <div class="feed-label">Recently Created</div>
-
-    <!-- ============================================================
-         POST CARD TEMPLATE — one of these per row from the posts table.
-         Backend supplies: cover_url, title, creator_name, chapter_label,
-         audio_url, duration_seconds, like_count, play_count.
-         Everything below is placeholder data standing in for those fields.
-    ============================================================= -->
-    <div class="card" data-template="post-card">
-      <img class="card-cover" src="https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=500&fit=crop" alt="cover" data-field="cover_url">
-      <div class="card-body">
-        <div class="card-title" data-field="title">Chro Ma Key: Colors Beyond Reality</div>
-        <div class="card-creator"><span data-field="creator_name">Artworqq</span> · <span data-field="chapter_label">Act 1</span></div>
-        <div class="play-row">
-          <button class="play-btn" data-action="play-audio">▶</button>
-          <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
-          <div class="duration" data-field="duration_seconds">4:12</div>
-        </div>
-        <div class="stats-row">
-          <span>♥ <span data-field="like_count">0</span></span>
-          <span>▶ <span data-field="play_count">0</span> plays</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         AD CARD TEMPLATE — inserted every N posts (backend or client-side
-         interleave logic decides N). Ad network supplies creative + link.
-    ============================================================= -->
-    <div class="card ad-card" data-template="ad-card">
-      <div class="ad-card-label">Sponsored</div>
-      <div class="ad-card-body" data-field="ad_creative">Ad space</div>
+    <div id="feedList">
+      <div class="empty-state" id="feedEmptyState">Loading...</div>
     </div>
   </div>
 
@@ -186,23 +153,21 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  /* ============================================================
-     TEMPLATE NOTE: everything below simulates the upload flow using
-     local blob URLs and direct DOM insertion — nothing is persisted
-     or shared between users. In the real build, uploadSubmitBtn's
-     handler gets replaced with: upload cover+audio to object storage,
-     insert a row into the posts table, then either re-fetch the feed
-     or append the new row's real returned URLs. The card markup itself
-     (data-template="post-card") does not change — only where its
-     data comes from does.
-  ============================================================= */
+  const SUPABASE_URL = "https://jtrdxlqtxjffzqtansqj.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_Q2tAo9bOgcvVW6KUBDQBAA_WTMpLloP";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
   const uploadOpenBtn = document.getElementById('uploadOpenBtn');
   const uploadForm = document.getElementById('uploadForm');
   const uploadCancelBtn = document.getElementById('uploadCancelBtn');
   const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
   const uploadFormStatus = document.getElementById('uploadFormStatus');
-  const feedSection = document.querySelector('.feed-section');
+  const feedList = document.getElementById('feedList');
+  const authorSearch = document.getElementById('authorSearch');
+
+  let allPosts = [];
 
   uploadOpenBtn.addEventListener('click', () => {
     uploadForm.style.display = uploadForm.style.display === 'none' ? 'flex' : 'none';
@@ -214,7 +179,105 @@
     if(e.target === uploadForm) uploadForm.style.display = 'none';
   });
 
-  uploadSubmitBtn.addEventListener('click', () => {
+  function formatDuration(totalSeconds){
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = String(Math.round(totalSeconds % 60)).padStart(2, '0');
+    return `${mins}:${secs}`;
+  }
+
+  function buildCard(post){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.postId = post.id;
+    card.dataset.creatorName = post.creator_name.toLowerCase();
+    card.innerHTML = `
+      <img class="card-cover" src="${post.cover_url}" alt="cover">
+      <div class="card-body">
+        <div class="card-title">${post.title}</div>
+        <div class="card-creator">by ${post.creator_name}${post.chapter_label ? ' · ' + post.chapter_label : ''}</div>
+        <div class="play-row">
+          <button class="play-btn">▶</button>
+          <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
+          <div class="duration">${formatDuration(post.duration_sec)}</div>
+          <audio src="${post.audio_url}" style="display:none;"></audio>
+        </div>
+        <div class="stats-row">
+          <span>♥ <span class="like-count">${post.like_count}</span></span>
+          <span>▶ <span class="play-count">${post.play_count}</span> plays</span>
+        </div>
+      </div>
+    `;
+
+    const audioEl = card.querySelector('audio');
+    const playBtn = card.querySelector('.play-btn');
+    const progressFill = card.querySelector('.progress-fill');
+    const playCountEl = card.querySelector('.play-count');
+    let counted = false;
+
+    playBtn.addEventListener('click', () => {
+      if(audioEl.paused){ audioEl.play(); playBtn.textContent = '❚❚'; }
+      else { audioEl.pause(); playBtn.textContent = '▶'; }
+    });
+    audioEl.addEventListener('timeupdate', () => {
+      if(audioEl.duration){
+        progressFill.style.width = (audioEl.currentTime / audioEl.duration * 100) + '%';
+      }
+      if(!counted && audioEl.currentTime > 3){
+        counted = true;
+        playCountEl.textContent = parseInt(playCountEl.textContent) + 1;
+        supabase.rpc('increment_play_count', { post_id: post.id }).then(({ error }) => {
+          if(error) console.error('play count increment failed', error);
+        });
+      }
+    });
+    audioEl.addEventListener('ended', () => { playBtn.textContent = '▶'; });
+
+    return card;
+  }
+
+  function renderAdCard(){
+    const ad = document.createElement('div');
+    ad.className = 'card ad-card';
+    ad.innerHTML = `<div class="ad-card-label">Sponsored</div><div class="ad-card-body">Ad space</div>`;
+    return ad;
+  }
+
+  function renderFeed(posts){
+    feedList.innerHTML = '';
+    if(!posts.length){
+      feedList.innerHTML = '<div class="empty-state">Nothing here yet — be the first to upload.</div>';
+      return;
+    }
+    posts.forEach((post, i) => {
+      feedList.appendChild(buildCard(post));
+      if((i + 1) % 3 === 0 && i !== posts.length - 1){
+        feedList.appendChild(renderAdCard());
+      }
+    });
+  }
+
+  async function loadFeed(){
+    const { data, error } = await supabase
+      .from('audio_book_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if(error){
+      feedList.innerHTML = '<div class="empty-state">Could not load the feed — try refreshing.</div>';
+      console.error(error);
+      return;
+    }
+    allPosts = data;
+    renderFeed(allPosts);
+  }
+
+  authorSearch.addEventListener('input', () => {
+    const q = authorSearch.value.trim().toLowerCase();
+    if(!q){ renderFeed(allPosts); return; }
+    renderFeed(allPosts.filter(p => p.creator_name.toLowerCase().includes(q)));
+  });
+
+  uploadSubmitBtn.addEventListener('click', async () => {
     const coverFile = document.getElementById('coverInput').files[0];
     const audioFile = document.getElementById('audioInput').files[0];
     const title = document.getElementById('titleInput').value.trim();
@@ -226,52 +289,62 @@
     if(!title){ uploadFormStatus.textContent = 'A title is required.'; return; }
     if(!creator){ uploadFormStatus.textContent = 'A creator name is required.'; return; }
 
+    uploadSubmitBtn.disabled = true;
     uploadFormStatus.textContent = 'Reading audio duration...';
 
-    const coverUrl = URL.createObjectURL(coverFile);
-    const audioUrl = URL.createObjectURL(audioFile);
-    const probe = new Audio(audioUrl);
+    const probe = new Audio(URL.createObjectURL(audioFile));
+    probe.addEventListener('loadedmetadata', async () => {
+      const durationSec = Math.round(probe.duration);
 
-    probe.addEventListener('loadedmetadata', () => {
-      const totalSeconds = Math.round(probe.duration);
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = String(totalSeconds % 60).padStart(2, '0');
-      const durationLabel = `${mins}:${secs}`;
+      try{
+        uploadFormStatus.textContent = 'Uploading cover...';
+        const coverExt = coverFile.name.split('.').pop();
+        const coverPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${coverExt}`;
+        const { error: coverErr } = await supabase.storage.from('covers').upload(coverPath, coverFile);
+        if(coverErr) throw coverErr;
+        const coverUrl = supabase.storage.from('covers').getPublicUrl(coverPath).data.publicUrl;
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <img class="card-cover" src="${coverUrl}" alt="cover">
-        <div class="card-body">
-          <div class="card-title">${title}</div>
-          <div class="card-creator">by ${creator}${chapter ? ' · ' + chapter : ''}</div>
-          <div class="play-row">
-            <button class="play-btn" onclick="this.closest('.play-row').querySelector('audio').play()">▶</button>
-            <div class="progress-track"><div class="progress-fill" style="width:0%;"></div></div>
-            <div class="duration">${durationLabel}</div>
-            <audio src="${audioUrl}" style="display:none;"></audio>
-          </div>
-          <div class="stats-row">
-            <span>♥ 0</span>
-            <span>▶ 0 plays</span>
-          </div>
-        </div>
-      `;
-      feedSection.insertBefore(card, feedSection.children[1]);
+        uploadFormStatus.textContent = 'Uploading audio...';
+        const audioExt = audioFile.name.split('.').pop();
+        const audioPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${audioExt}`;
+        const { error: audioErr } = await supabase.storage.from('audio').upload(audioPath, audioFile);
+        if(audioErr) throw audioErr;
+        const audioUrl = supabase.storage.from('audio').getPublicUrl(audioPath).data.publicUrl;
 
-      uploadFormStatus.textContent = 'Posted.';
-      document.getElementById('coverInput').value = '';
-      document.getElementById('audioInput').value = '';
-      document.getElementById('titleInput').value = '';
-      document.getElementById('creatorInput').value = '';
-      document.getElementById('chapterInput').value = '';
-      setTimeout(() => { uploadForm.style.display = 'none'; uploadFormStatus.textContent = ''; }, 800);
+        uploadFormStatus.textContent = 'Posting...';
+        const { error: insertErr } = await supabase.from('audio_book_posts').insert({
+          creator_name: creator,
+          title: title,
+          chapter_label: chapter || null,
+          cover_url: coverUrl,
+          audio_url: audioUrl,
+          duration_sec: durationSec
+        });
+        if(insertErr) throw insertErr;
+
+        uploadFormStatus.textContent = 'Posted.';
+        document.getElementById('coverInput').value = '';
+        document.getElementById('audioInput').value = '';
+        document.getElementById('titleInput').value = '';
+        document.getElementById('creatorInput').value = '';
+        document.getElementById('chapterInput').value = '';
+        await loadFeed();
+        setTimeout(() => { uploadForm.style.display = 'none'; uploadFormStatus.textContent = ''; }, 800);
+      }catch(err){
+        console.error(err);
+        uploadFormStatus.textContent = 'Error: ' + (err.message || 'upload failed') + '.';
+      }finally{
+        uploadSubmitBtn.disabled = false;
+      }
     });
 
     probe.addEventListener('error', () => {
       uploadFormStatus.textContent = 'Could not read that audio file — try a different format (MP3 works best).';
+      uploadSubmitBtn.disabled = false;
     });
   });
+
+  loadFeed();
 </script>
 </body>
 </html>
