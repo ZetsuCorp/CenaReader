@@ -153,6 +153,12 @@
 
 </div>
 
+<script>
+  window.onerror = function(msg, src, line, col, err){
+    const feedEl = document.getElementById('feedList');
+    if(feedEl) feedEl.innerHTML = '<div class="empty-state">Script error: ' + msg + ' (line ' + line + ')</div>';
+  };
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // Wire the modal FIRST — this must work even if Supabase fails to load.
@@ -253,18 +259,23 @@
 
   async function loadFeed(){
     if(!supabase) return;
-    const { data, error } = await supabase
-      .from('audio_book_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try{
+      const { data, error } = await supabase
+        .from('audio_book_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if(error){
-      feedList.innerHTML = '<div class="empty-state">Could not load the feed.<br><br>Error: ' + (error.message || JSON.stringify(error)) + '</div>';
-      console.error(error);
-      return;
+      if(error){
+        feedList.innerHTML = '<div class="empty-state">Could not load the feed.<br><br>Error: ' + (error.message || JSON.stringify(error)) + '</div>';
+        console.error(error);
+        return;
+      }
+      allPosts = data;
+      renderFeed(allPosts);
+    }catch(err){
+      feedList.innerHTML = '<div class="empty-state">Request to Supabase failed entirely.<br><br>Error: ' + (err.message || String(err)) + '</div>';
+      console.error(err);
     }
-    allPosts = data;
-    renderFeed(allPosts);
   }
 
   authorSearch.addEventListener('input', () => {
