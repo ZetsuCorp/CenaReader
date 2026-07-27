@@ -116,10 +116,10 @@
   <header>
     <a class="logo" href="https://cenareader.ploy.build/" style="text-decoration:none;">CenaReader</a>
     <input type="text" class="author-search" id="authorSearch" placeholder="Find an author...">
-    <button class="upload-btn" id="uploadOpenBtn">+ Upload</button>
+    <button class="upload-btn" onclick="document.getElementById('uploadForm').style.display='flex';">+ Upload</button>
   </header>
 
-  <div class="upload-form" id="uploadForm" style="display:none;">
+  <div class="upload-form" id="uploadForm" style="display:none;" onclick="if(event.target===this){this.style.display='none';}">
     <div class="upload-form-inner">
       <div class="feed-label" style="margin-top:0;">New Upload</div>
       <label class="form-label">Cover image</label>
@@ -134,7 +134,7 @@
       <input type="text" id="chapterInput" placeholder="Act 1">
       <div style="display:flex; gap:10px; margin-top:16px;">
         <button class="upload-btn" id="uploadSubmitBtn">Post to feed</button>
-        <button class="cancel-btn" id="uploadCancelBtn">Cancel</button>
+        <button class="cancel-btn" onclick="document.getElementById('uploadForm').style.display='none';">Cancel</button>
       </div>
       <div class="form-status" id="uploadFormStatus"></div>
     </div>
@@ -156,23 +156,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // Wire the modal FIRST — this must work even if Supabase fails to load.
-  const uploadOpenBtn = document.getElementById('uploadOpenBtn');
-  const uploadForm = document.getElementById('uploadForm');
-  const uploadCancelBtn = document.getElementById('uploadCancelBtn');
   const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
   const uploadFormStatus = document.getElementById('uploadFormStatus');
   const feedList = document.getElementById('feedList');
   const authorSearch = document.getElementById('authorSearch');
-
-  uploadOpenBtn.addEventListener('click', () => {
-    uploadForm.style.display = uploadForm.style.display === 'none' ? 'flex' : 'none';
-  });
-  uploadCancelBtn.addEventListener('click', () => {
-    uploadForm.style.display = 'none';
-  });
-  uploadForm.addEventListener('click', (e) => {
-    if(e.target === uploadForm) uploadForm.style.display = 'none';
-  });
 
   let supabase = null;
   let allPosts = [];
@@ -339,7 +326,7 @@
         document.getElementById('creatorInput').value = '';
         document.getElementById('chapterInput').value = '';
         await loadFeed();
-        setTimeout(() => { uploadForm.style.display = 'none'; uploadFormStatus.textContent = ''; }, 800);
+        setTimeout(() => { document.getElementById('uploadForm').style.display = 'none'; uploadFormStatus.textContent = ''; }, 800);
       }catch(err){
         console.error(err);
         uploadFormStatus.textContent = 'Error: ' + (err.message || 'upload failed') + '.';
