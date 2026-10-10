@@ -261,8 +261,9 @@ ${text}
         "Authorization": "Bearer " + document.getElementById('anthropicKeyInput').value.trim()
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 4000,
+        model: "openai/gpt-oss-120b",
+        reasoning_effort: "low",
+        max_completion_tokens: 8000,
         messages: [{ role: "user", content: prompt }]
       })
     });
